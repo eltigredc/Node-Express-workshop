@@ -2144,6 +2144,13 @@ main{
           placeholder="Enter password"
           value="<%= typeof password != 'undefined' ? password : '' %>">
           <button>Sign up</button>
+
+          <input 
+          type="password"
+          name="password_confirmation"
+          placeholder="Enter password  confirmation"
+          value="<%= typeof password_confirmation != 'undefined' ? password_confirmation : '' %>">
+
         </form>
         
         <ul>
@@ -2181,6 +2188,163 @@ main{
   </div>
 </main>
 ```
-
-
 </details>
+
+## 12. Authentication : My first controller
+
+lets create our user controller to actually start and add some features to our app.
+
+inside our __controllers__ folder, we will create a file called __users_controller.js__
+
+Our folder tree now looks like this :
+
+![image](/images/31.png)
+
+nice, in our __users_controller.js__ file, we will first tackle the register function.
+
+So let's create it.
+
+```js
+const register = (req, res) => {
+    
+} 
+```
+First of, we want to get back the user's input
+
+```js
+const register = (req, res) => {
+    const {username,email, password, password_confirmation} = req.body;
+} 
+```
+Then just to test it, we  will  print  out these values
+
+```js
+const register = (req, res) => {
+    const {username,email, password, password_confirmation} = req.body;
+    console.log(' username ' + username  + ' email :' + email + ' pass:' + password);
+} 
+```
+
+Remember, if our app is a building, then each feature is an appartment, if we want to connect to one appartment, we need to know its number, its path, its route. 
+
+until now we've defined all our routes inside our __app.js__ file, it was  fine when we only had one or two routes, but now that we have more, time to clean up our folder.
+
+First, let's create a new folder called __routes__ and inside of it a new file called __users_router.js__ 
+
+In our users_router file, we will need to first be sure that we have the dependencies we need. 
+We will need to use a native function from __Express__ called router. So lets first call express, then define router.
+
+```js
+// DEPENDENCIES
+const express = require('express');
+const router = express.Router();
+```
+
+We will also need to import the controller we just created to be able to use it. but to be able to import, we also need to export, so for two seconds we will go back in our __users_controller.js__ file and add  at  the bottom :
+
+```js
+module.exports = {register};
+```
+
+Once that is done, we will be able to come back to our router and import it with the rest of our dependencies.
+
+```js
+// DEPENDENCIES
+const express = require('express');
+const router = express.Router();
+const register = require('../controllers/users_controller.js').register
+```
+
+Once that's done, time to create our path. still in our router we are going to add the following code 
+
+```js
+// DEPENDENCIES
+const express = require('express');
+const router = express.Router();
+const register = require('../controllers/users_controller.js').register
+
+router.post('/register',(req,res) => register(req,res))
+
+module.exports = router;
+```
+
+ First we define our route, on /register we will launch the register function that comes from our users_controller file. 
+
+ We don't forget to export our router, because we still need to tell our app to actually use it.
+
+ for that, let's go back into our app.js file and  we will add these beautiful lines of code :
+
+```js
+// ROUTES
+app.use('/users',require('./routes/users_router'));
+```
+
+Nice!
+
+Everything is connected, but we can't test it, that's because we are missing somewhere to a ctually see our  form.
+
+Let's quickly add a path/route juste for that, and we are lucky we just created the right file for that. inside your __users_router.js__ file time to add a second and a third route, simply to display our previously created EJS files.
+
+Your __users_router.js__ file should look this :
+
+```js
+// DEPENDENCIES
+const express = require('express');
+const router = express.Router();
+const register = require('../controllers/users_controller.js').register
+
+
+router.post('/register',(req,res) => register(req,res))
+
+router.get('/login',(req,res)=>{
+    res.render('users/login');
+})
+
+router.get('/register',(req,res)=>{
+   res.render('users/register')
+})
+
+module.exports  = router;
+```
+
+and you should be able to access these two pages by navigating here : [register](http://localhost:3000/users/register), [login](http://localhost:3000/users/login)
+
+SUPER!!!!!!!
+
+Almost there, If you fill out the register form for the moment, nothing happens.
+
+That is because our front-end form in our ejs file is not yet connected to our backend, it is very easily fixable though. For that, lets go back to our EJS file __views/users/register.ejs__ and update our HTML form by adding to it an _ACTION_ and a _Method_
+
+```html
+<form action="/users/register" method="POST">
+```
+
+the action corresponds to our path (our appartment number) route that we  have defined above.
+
+1. action : the path given to the action comes from two places, the "/users" comes from the general route as defined in our __app.js__ file, the "/register" part comes from our router, it is the sub-route, we are uin the _users_ appartment, but entering the _register_ room.
+
+2. The action POST comes from the method also defined in our router. 
+
+![image](/images/32.png)
+
+Cool, now that that is done, you  should be able to fill out  the register form once again and see that we now get an error.
+
+![image](/images/33.png)
+
+Weird, and annoying, but actually good news, that means that our frontend speaks with oour backend, even if it gets messed up.
+
+Luckily, the solution is quite simple, we are just missing a few setup lines once again.
+Let's go back to our __app.js__ and under our SETUP chapter, we will add these few lines: 
+
+```js
+app.use(express.urlencoded({extended : false}));
+app.use(express.json())
+```
+
+You'll find more infos about these setup options [here](https://expressjs.com/en/api.html) but for now, let's just say that they allow you to  play with  JSON as data and that  is pretty neat.
+
+Once these lines are added, fill out the register form once again and open your terminal. 
+
+if your terminal prints out what you filled out, everything is right and you can go to the next step!
+![image](/images/34.png)
+

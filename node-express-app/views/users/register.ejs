@@ -6,7 +6,7 @@
         <h1 class="logo">Register</h1>
       </div>
       <div class="container">
-        <form action="">
+        <form action="/users/register" method="POST">
           <input 
           type="email"
           name="email"
@@ -24,6 +24,11 @@
           name="password"
           placeholder="Enter password"
           value="<%= typeof password != 'undefined' ? password : '' %>">
+          <input 
+          type="password"
+          name="password_confirmation"
+          placeholder="Enter password  confirmation"
+          value="<%= typeof password_confirmation != 'undefined' ? password_confirmation : '' %>">
           <button>Sign up</button>
         </form>
         
