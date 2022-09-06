@@ -1503,4 +1503,270 @@ app.get('/profile', (req, res) => {
 // SERVER
 (...)
 ```
-and we can now try to connect to localhost:3000/profile
+and we can now try to connect to __localhost:3000/profile__
+
+BEAUTIFUL! we now have routing! I hope you get how basic routing works now, its quite simple right?
+
+As you can see by changing our __URL__(route/path) we can already access different pages.
+
+![image](/images/17.png)
+
+
+## 09 - Database connection
+
+So, we tackled a nice frontend, but it is time to also tackle a nice backend. Play around with authentication, create posts and consult other users profiles.
+
+To be able to do all that, we will need to code some nice features, but everything will start with a database, and a connection to it.
+
+We will use [Mongo db Atlas](https://www.mongodb.com/), it is the online hosted version of MongoDb and allows us to set up and play with a database for free (at start).
+
+Go ahead and start by creating an account.
+
+Once your account created and youself connected, you should see a Dashboard that looks a something like this.
+
+Go ahead and click on __"New Project"__
+
+![image](/images/18.png)
+
+Name your project
+
+![image](/images/19.png)
+
+Set yourself as the project owner, and add people to your project if you need to and then, create your project!
+
+![image](/images/20.png)
+
+Once created you should find yourself on this dashboard.
+
+![image](/images/21.png)
+
+Go ahead and click on __"Build a Database"__ and choose the free tier option
+
+![image](/images/22.png)
+
+Choose the cloud provider of your choice, and click on __"Create Cluster"__
+
+Then, fill in your security info, Be careful to remember your username and password, as they will be very important for the next steps.
+
+To finish the security mesures, add your IP adress to the list of authorized adresses or/and add the __0.0.0.0__ IP adress to authorize any IP to connect to the cluster.
+
+
+All right, everything is set up, if you go back to the database tab, yoou should see your cluster, by default, it is called Cluster0.
+
+Click on the __Connect__ button
+
+![image](/images/23.png)
+
+And then, choose __"Connect your application"__
+
+![image](/images/24.png)
+
+You should see a modal looking like this :
+
+![image](/images/25.png)
+
+Keep this modal open, but let's go back to our text editor and terminal, because we will have to write some code.
+
+The first step for us is to connect our application to our database everytime we start it. For that you might have guessed it, but we will use yet another Library. We will use __mongoose__, Mongoose will help us for every database related features, it has a bunch of already made functions that will simplify our life.
+
+so once again, open your terminal and run :
+
+```bash
+npm install mongoose --save
+```
+
+*What is Mongoose?
+Mongoose is a Node.js-based Object Data Modeling (ODM) library for MongoDB. It is akin to an Object Relational Mapper (ORM) such as SQLAlchemy for traditional SQL databases. The problem that Mongoose aims to solve is allowing developers to enforce a specific schema at the application layer. In addition to enforcing a schema, Mongoose also offers a variety of hooks, model validation, and other features aimed at making it easier to work with MongoDB.*
+
+
+Once mongoose has been installed we will have to fire the  connection at every app launch, that means, tha we will play around with our __app.js__ file once again.
+
+First, let's add our newest dependency at the top level of the file.
+
+```js
+// DEPENDENCIES
+const express = require('express');
+const expressEjsLayout = require('express-ejs-layouts')
+const mongoose = require('mongoose');
+```
+
+Then we will add a new Comment/chapter called "DATABASE SETUP" in which we will add our connection code
+
+```js
+//DATABASE SETUP
+mongoose.connect('',{})
+.then(() => )
+.catch((err)=> );
+```
+the connect function takes two argument.
+
+1. Open the modal that you should still have on the background because the first argument will be found there.
+
+![image](/images/26.png)
+
+Copy this line into the first string argument, and don't forget to replace the password you've setted up earlier. it should give you something like this.
+
+```js
+//DATABASE SETUP
+mongoose.connect('mongodb+srv://snoopDiog:<password>@cluster0.pz7jo9z.mongodb.net/?retryWrites=true&w=majority',{})
+.then(() => )
+.catch((err)=> );
+```
+
+Nice!
+
+2. The second argument, is an object, and it is actually params that you can pass to your database connection. in our case, we will pass two params : 
+```js
+//DATABASE SETUP
+mongoose.connect('mongodb+srv://snoopDiog:<password>@cluster0.pz7jo9z.mongodb.net/?retryWrites=true&w=majority',{useNewUrlParser: true, useUnifiedTopology : true})
+.then(() => )
+.catch((err)=> );
+```
+If you want to know why we add these options, I invite you to read more about it on [here](https://mongoosejs.com/docs/5.x/docs/deprecations.html).
+
+Then it would be nice to have a little feedback on what's going on, so let's add a little console log when everything's fine as well a second one when there's an error
+
+```js
+mongoose.connect('mongodb+srv://snoopDiog:<password>@cluster0.pz7jo9z.mongodb.net/?retryWrites=true&w=majority',{useNewUrlParser: true, useUnifiedTopology : true})
+.then(() => console.log('I just connected to your DB, And ready to rumble'))
+.catch((err)=> console.log(err));
+```
+
+If you did everything correctly, when you run 
+
+```bash
+nodemon app.js
+```
+
+you should see this on your terminal :
+
+![image](/images/27.png)
+
+If not, it usually means, that you messed up your password, don't worry though, you can go back to mongoDB and change it to something new :)
+
+
+## 10 - Authentication : My first model
+
+Time to talk authentication, we want our app to be secure, for users, to create account, and only be able to access data when they are logged in. 
+
+We will for that need to have actual users in our database and for that  and for all of our backend management, we will use the MVC paradygm.
+
+We already have the __views__ folder, but we are missing the __models__ as well as the __controllers__ folders. 
+
+so let's create them and inside the __models__ folder, let's already create the __user.js__ file.
+
+Our folder tree should look something like this: 
+
+![image](/images/28.png)
+
+Beautiful! our app is starting to look very pro! :)
+
+Let's play with our new model file to define what we want from it.
+
+As said previously, we installed __Mongoose__ a library that will allow us to do everything database related way more easely. is our model file related to our database? YES, so should we define our dependencies in the file too? YES.
+
+Let's define Mongoose so we can use it.
+
+```js
+// DEPENDENCIES
+const mongoose = require('mongoose');
+```
+
+Nice, then we will be able to use mongoose to create a new database table schema. in this case the user schema
+
+```js
+// SCHEMA
+const UserSchema  = new mongoose.Schema();
+```
+
+the *Schema()* function takes one argument in the form of an object that will describe all the columns of our table. In this case the user. Some fields are mandatory for the features we will install.
+
+1. EMAIL
+2. PASSWORD
+3. USERNAME
+
+All other columns can be optional, or added afterwards if needed. We will talk about pictures upload later down this article.
+
+Once all your fields added your schema should look something like this.
+
+```js
+// SCHEMA
+const UserSchema  = new mongoose.Schema({
+  username :{
+      type  : String,
+      required : true
+  } ,
+  email :{
+    type  : String,
+    required : true
+  } ,
+  password :{
+    type  : String,
+    required : true
+  } ,
+  creation_date :{
+    type : Date,
+    default : Date.now
+  }
+});
+```
+I, in this case simply added the creation date with a default value set as to be the current datetime at the moment of creation.
+
+Perfect, we now have a Schema, look at the schema as if it was a Blueprint of our Model, but not our model yet.
+That means that in order to have a working model we have to create it still.
+
+for that we will add this line after our schema has been defined :
+
+```js
+// MODEL
+const User = mongoose.model('User', UserSchema);
+```
+And to finnish, if we want to be able to use our model in other files we will have to export it. So we will finish our file by exporting our User model.
+
+```js
+module.exports = User;
+```
+
+If you followed all these steps, your __models/user.js__ file should look something like this
+
+<details>
+  <summary>See full page code</summary>
+
+1. models/user.js
+  ```js
+    // DEPENDENCIES
+    const mongoose = require('mongoose');
+
+    // SCHEMA
+    const UserSchema  = new mongoose.Schema({
+      username :{
+          type  : String,
+          required : true
+      } ,
+      email :{
+        type  : String,
+        required : true
+      } ,
+      password :{
+        type  : String,
+        required : true
+      } ,
+      creation_date :{
+        type : Date,
+        default : Date.now
+      }
+    });
+
+    // MODEL
+    const User = mongoose.model('User', UserSchema);
+
+    // EXPORT
+    module.exports = User;
+  ```
+</details>
+
+Allright!! we have our first Model! that's the first step into writing nice backend! Let's write our first controller
+
+## 11 - Authentication : speed code some views
+
+
