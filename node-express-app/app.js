@@ -23,7 +23,7 @@ app.get('/', (req, res) => {
 })
 
 app.get('/profile', (req, res) => {
-  res.render('users/profile');
+  res.render('users/login');
 })
 
 // SERVER
