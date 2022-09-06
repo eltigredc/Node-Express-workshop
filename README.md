@@ -2348,3 +2348,358 @@ Once these lines are added, fill out the register form once again and open your 
 if your terminal prints out what you filled out, everything is right and you can go to the next step!
 ![image](/images/34.png)
 
+
+## 13. Authentication : Register
+
+Okay, we  now have a working link between our front-end and our back-end but our register function is not the most complete right now.
+
+In  our __users_controller.js__ file,  let's continue our register function.
+
+First, we want to have some error handling setted up so that we don't just save bad data in our database.
+
+for that we'll first  define an empty error array.
+
+```js
+const register = (req, res) => {
+    const {username,email, password, password_confirmation} = req.body;
+    console.log(' username ' + username  + ' email :' + email + ' pass:' + password);
+
+    const errors = []
+} 
+
+
+module.exports = {register};
+```
+
+then we will add some errors use-cases:
+
+1. Check if all the fields have been filled
+2. Check if the passwords match
+3. Check if the password is more than 6 characters
+
+If the check passes for any of them, we push an error message inside our previously created array.
+
+```js
+const register = (req, res) => {
+    const {username,email, password, password_confirmation} = req.body;
+    console.log(' username ' + username  + ' email :' + email + ' pass:' + password);
+
+    const errors = []
+
+    // check if all fields have been filled
+    if(!username || !email || !password || !password_confirmation) {
+        errors.push({msg : "Please fill in all fields"})
+    }
+    //check if match
+    if(password !== password_confirmation) {
+        errors.push({msg : "passwords dont match"});
+    }
+
+    //check if password is more than 6 characters
+    if(password.length < 6 ) {
+        errors.push({msg : 'password atleast 6 characters'})
+    }
+} 
+
+
+module.exports = {register};
+```
+
+
+Then, we check if there is some errors, if there is we rerender the same page, passing it the same values as well as the errors
+
+```js
+const register = (req, res) => {
+    const {username,email, password, password_confirmation} = req.body;
+    console.log(' username ' + username  + ' email :' + email + ' pass:' + password);
+
+    const errors = []
+
+    // check if all fields have been filled
+    if(!username || !email || !password || !password_confirmation) {
+        errors.push({msg : "Please fill in all fields"})
+    }
+    //check if match
+    if(password !== password_confirmation) {
+        errors.push({msg : "passwords dont match"});
+    }
+
+    //check if password is more than 6 characters
+    if(password.length < 6 ) {
+        errors.push({msg : 'password atleast 6 characters'})
+    }
+
+    if(errors.length > 0 ) {
+    res.render('users/register', {
+        errors : errors,
+        username : username,
+        email : email,
+        password : password,
+        password_confirmation : password_confirmation})
+     }
+
+} 
+
+
+module.exports = {register};
+```
+
+if there is no errors we can go to next step which is to save the data entered inside the database. but for that we will need to import a few things in our file.
+
+1. we will need to import our USER Model, as it with ot  that we are going to interact as in our database.
+
+```js
+//DEPENDENCIES
+const User = require("../models/user");
+```
+
+2. We will need to install and import yet another library, this one is called [bcrypt](https://www.npmjs.com/package/bcrypt) it will help enhance the security of our app hashing our passwords. Why should we do that, [check it out](https://auth0.com/blog/hashing-passwords-one-way-road-to-security/)
+
+let's do it then, by once again running 
+
+```bash
+npm install bcrypt --save
+```
+
+and at the top of our file
+
+```js
+//DEPENDENCIES
+const User = require("../models/user");
+const bcrypt = require('bcrypt');
+```
+
+Nice now that we have everything we need, we can play around our register function even more.
+
+so, when there's no user error, the first thing we want to be sure of is that there is not two times the same email registered inside our database.
+
+
+```js
+//DEPENDENCIES
+const User = require("../models/user");
+const bcrypt = require('bcrypt');
+
+const register = (req, res) => {
+    const {username,email, password, password_confirmation} = req.body;
+    console.log(' username ' + username  + ' email :' + email + ' pass:' + password);
+
+    const errors = []
+
+    // check if all fields have been filled
+    if(!username || !email || !password || !password_confirmation) {
+        errors.push({msg : "Please fill in all fields"})
+    }
+    //check if match
+    if(password !== password_confirmation) {
+        errors.push({msg : "passwords dont match"});
+    }
+
+    //check if password is more than 6 characters
+    if(password.length < 6 ) {
+        errors.push({msg : 'password atleast 6 characters'})
+    }
+
+    if(errors.length > 0 ) {
+    res.render('users/register', {
+        errors : errors,
+        username : username,
+        email : email,
+        password : password,
+        password_confirmation : password_confirmation})
+     }else{
+        User.findOne({email : email}).exec((err,user)=>{
+          console.log(user);
+          if(user) {
+
+          }else{
+
+          }
+        })
+     }
+
+} 
+
+
+module.exports = {register};
+
+```
+
+If we find a user, we create a new error message, and we re-render the page
+
+```js
+//DEPENDENCIES
+const User = require("../models/user");
+const bcrypt = require("bcrypt");
+
+
+const register = (req, res) => {
+    const {username,email, password, password_confirmation} = req.body;
+    console.log(' username ' + username  + ' email :' + email + ' pass:' + password);
+
+    const errors = []
+
+    // check if all fields have been filled
+    if(!username || !email || !password || !password_confirmation) {
+        errors.push({msg : "Please fill in all fields"})
+    }
+    //check if match
+    if(password !== password_confirmation) {
+        errors.push({msg : "passwords dont match"});
+    }
+
+    //check if password is more than 6 characters
+    if(password.length < 6 ) {
+        errors.push({msg : 'password atleast 6 characters'})
+    }
+
+    if(errors.length > 0 ) {
+    res.render('users/register', {
+        errors : errors,
+        username : username,
+        email : email,
+        password : password,
+        password_confirmation : password_confirmation})
+     }else{
+        User.findOne({email : email}).exec((err,user)=>{
+          console.log(user);
+          if(user) {
+            errors.push({msg: 'email already registered'});
+            res.render('register',{errors,username,email,password,password_confirmation})
+          }else{
+            
+          }
+        })
+     }
+
+} 
+
+
+module.exports = {register};
+```
+
+If we don't an user that means that we can save it to the database
+
+```js
+//DEPENDENCIES
+const User = require("../models/user");
+const bcrypt = require("bcrypt");
+
+
+const register = (req, res) => {
+    const {username,email, password, password_confirmation} = req.body;
+    console.log(' username ' + username  + ' email :' + email + ' pass:' + password);
+
+    const errors = []
+
+    // check if all fields have been filled
+    if(!username || !email || !password || !password_confirmation) {
+        errors.push({msg : "Please fill in all fields"})
+    }
+    //check if match
+    if(password !== password_confirmation) {
+        errors.push({msg : "passwords dont match"});
+    }
+
+    //check if password is more than 6 characters
+    if(password.length < 6 ) {
+        errors.push({msg : 'password atleast 6 characters'})
+    }
+
+    if(errors.length > 0 ) {
+    res.render('users/register', {
+        errors : errors,
+        username : username,
+        email : email,
+        password : password,
+        password_confirmation : password_confirmation})
+     }else{
+        User.findOne({email : email}).exec((err,user)=>{
+          console.log(user);
+          if(user) {
+            errors.push({msg: 'email already registered'});
+            res.render('register',{errors,username,email,password,password_confirmation})
+          }else{
+            const newUser = new User({
+                username : username,
+                email : email,
+                password : password
+            });
+
+            //hash password
+            bcrypt.genSalt(10,(err,salt)=>
+            bcrypt.hash(newUser.password,salt,
+                (err,hash)=> {
+                    if(err) throw err;
+                        //save pass to hash
+                        newUser.password = hash;
+                    //save user
+                    newUser.save()
+                    .then((value)=>{
+                        console.log(value)
+                        res.redirect('/users/login');
+                    })
+                    .catch(value=> console.log(value));
+
+                }));
+          }
+        })
+     }
+
+} 
+
+
+module.exports = {register};
+```
+
+First, we create a new user Using the User Model that we imported earlier. 
+
+Then, we use the bcrypt library in order to hash the new user's password. once it's done, we redirect the user to the login page so he can login
+
+Time to test it up.
+
+Let's fill all the fields again and see  what happens.
+
+If your terminal shows you this prompt it means that  everything worked :
+
+![image](/images/35.png)
+
+You can also go back to  your mongodb  atlas page, on your cluster, then on the "collection" tab, to see that it has indeed been saved.
+
+![image](/images/36.png)
+
+
+## 14. Authentication : error messages
+
+We created a bunch of error messages but we don't do anything with them, which is quite sad, so let do something  about it.
+
+Inside our __views__  folder, we will create another folder called __partials__ these will be snippets of code that  we will be able to reuse troughout our app.
+
+Inside this folder, we will create a file called __messages.ejs__
+
+and inside, we will add the following EJS code
+
+```ejs
+<% if(typeof errors!= 'undefined') { %>
+<%    errors.forEach(function(error){ %>
+        <p> <%= error.msg %></p>
+<%    })        %>
+<% } %>
+```
+
+and inside our __register.ejs__ file we will update it by adding 
+
+```ejs
+    <div class="header">
+        <h1 class="logo">Register</h1>
+        <%- include ('./partials/messages') %>
+    </div>
+```
+
+You can now test it out, you should be able to see the error messages when you try to submit a form that has errors
+
+BRAVO!
+
+We are almost there, we'll add the login part of our code and we'll almost be done with authentication
+
+
+## 15. Authentication : Login
