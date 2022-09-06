@@ -2,18 +2,30 @@
 const express = require('express');
 const expressEjsLayout = require('express-ejs-layouts')
 const mongoose = require('mongoose');
+const passport = require("passport")
+const session = require("express-session")
 
 // VARIABLES
 const app = express();
 const port = 3000
 
 //SETUP
+require('./config/passport')(passport)
 app.set('view engine','ejs');
 app.use(expressEjsLayout);
 app.use("/static", express.static("public"));
-
 app.use(express.urlencoded({extended : false}));
 app.use(express.json())
+app.use(session({
+    secret : 'secret',
+    resave : true,
+    saveUninitialized : true
+}));
+
+app.use(passport.initialize());
+
+app.use(passport.session());
+
 
 //DATABASE SETUP
 mongoose.connect('mongodb+srv://snoopDiog:diogodiogodiogo@cluster0.pz7jo9z.mongodb.net/?retryWrites=true&w=majority',{useNewUrlParser: true, useUnifiedTopology : true})

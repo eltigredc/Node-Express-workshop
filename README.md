@@ -2703,3 +2703,194 @@ We are almost there, we'll add the login part of our code and we'll almost be do
 
 
 ## 15. Authentication : Login
+
+Allright, time to login! 
+
+as login in, is a new feature, lets create a new function inside our __users_controller.js__ file
+
+this function will be called login
+
+```js
+const login = (req, res, next) => {
+
+}
+```
+
+In order to fill this function we will need yet again, another library. This one is called [passport](https://www.npmjs.com/package/passport) 
+
+*=> Passport is Express-compatible authentication middleware for Node.js.
+Passport's sole purpose is to authenticate requests, which it does through an extensible set of plugins known as strategies. Passport does not mount routes or assume any particular database schema, which maximizes flexibility and allows application-level decisions to be made by the developer. The API is simple: you provide Passport a request to authenticate, and Passport provides hooks for controlling what occurs when authentication succeeds or fails.*
+
+Install Passport 
+
+```bash
+npm install passport --save
+```
+
+Once passport is installed, we'll need to call it as dependency at the top of our file.
+
+```js
+//DEPENDENCIES
+const User = require("../models/user");
+const bcrypt = require("bcrypt");
+const passport = require("passport")
+```
+
+Once installed, we can use its build function quite simply in order to authenticate our user and we don't forget to export it alongside the "register" function.
+
+```js
+const login = (req, res, next) => {
+    passport.authenticate('local',{
+        successRedirect : '/',
+        failureRedirect: '/users/login',
+        failureFlash : true
+    })(req,res,next)
+}
+
+module.exports = {register, login};
+```
+
+Nice, we still need to hook it up to a route/path/appartment number. let's open our  __users_router.js__ and add our new function
+
+```js
+// DEPENDENCIES
+const express = require('express');
+const router = express.Router();
+const register = require('../controllers/users_controller.js').register
+const loogin = require('../controllers/users_controller.js').login
+
+router.post('/register',(req,res) => register(req,res))
+router.post('/login',(req,res, next) => login(req,res,next))
+
+router.get('/login',(req,res)=>{
+    res.render('users/login');
+})
+
+router.get('/register',(req,res)=>{
+   res.render('users/register')
+})
+
+module.exports  = router;
+```
+
+and to finnish, we can't forget to  update our action and method  in our form inside __login.ejs__
+
+```ejs
+    <form action="/users/login" method="POST">
+```
+
+and once that's done, we can test it!
+
+Shit, it does not work, if you this error, that means that we are on the right path, but still missing something.
+
+![image](/images/37.png)
+
+You might have guessed it, but we need a little more setup to make passport work for us.
+
+1. First, at the  root of our app, create a folder called __config__, inside, create two files, the first, __auth.js__, the second, __passport.js__
+
+in the first one (__auth.js__) put this code :
+
+```js
+module.exports = {
+    ensureAuthenticated : function(req,res,next) {
+        if(req.isAuthenticated()) {
+            return next();
+        }
+        res.redirect('/users/login');
+    }
+}
+```
+
+This little snippet will allow us to control if a user is authenticated or not, and to allow a user to access certain pages.
+
+in the second one (__passport.js__) you can put this code  :
+
+```js
+
+const User = require('../models/user');
+const LocalStrategy = require('passport-local').Strategy;
+const bcrypt = require('bcrypt');
+
+module.exports = function(passport){
+    passport.use(
+        new LocalStrategy({usernameField: 'email'},(email,password,done)=>{
+            //match user
+            User.findOne({email:email})
+            .then((user)=>{
+                if(!user){
+                    return done(null,false,{message:'email not registered'});
+                }
+                //math passwords
+                bcrypt.compare(password,user.password,(err,isMatch)=>{
+                    if(err) throw err;
+                    if(isMatch){
+                        return done(null,user);
+                    } else{
+                        return done(null,false,{message: 'password incorrect'});
+                    }
+                })
+            })
+            .catch((err)=>{console.log(err)})
+        })
+    )
+    passport.serializeUser(function(user,done) {
+        done(null,user.id);
+    })
+    passport.deserializeUser(function(id,done){
+        User.findById(id,function(err,user){
+            done(err,user);
+        })
+    })
+}
+```
+
+This is the code used by passport to check wether or not a login can occur. Asyou are very curious, I'm sure that  you saw that this fileis using alibrary  that we never used before, so  what are you waiting for to dowwnload the  library?
+
+```bash 
+npm install passport-local --save
+```
+
+And too finnish, let's add a little setup line in our __app.js__ as well as our passport dependency
+
+```js
+//DEPENDENCIES
+const passport = require("passport")
+//SETUP
+require('./config/passport')(passport)
+```
+
+And everything is right, you  should come accross this error when you try to login.
+
+
+![image](/images/38.png)
+
+This is a quite verbose error, that puts us in the right direction. we are indeed missing a library called __express-session__
+
+Let's install it!
+
+```bash
+npm install express-session --save
+```
+
+and again, in our __app.js__ file, we'll haveto add a setup line, as well as a dependency.
+
+```js
+    //DEPENDENCIES
+    const session = require("express-session")
+    //SETUP
+    app.use(session({
+        secret : 'secret',
+        resave : true,
+        saveUninitialized : true
+    }));
+
+    app.use(passport.initialize());
+
+    app.use(passport.session());
+```
+
+and by reloading the page, you can see that you should now have access to the page!
+
+
+## 16. Authentication : Permissions

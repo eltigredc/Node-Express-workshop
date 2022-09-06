@@ -1,6 +1,7 @@
 //DEPENDENCIES
 const User = require("../models/user");
 const bcrypt = require("bcrypt");
+const passport = require("passport")
 
 
 const register = (req, res) => {
@@ -67,4 +68,12 @@ const register = (req, res) => {
 } 
 
 
-module.exports = {register};
+const login = (req, res, next) => {
+	passport.authenticate('local',{
+	    successRedirect : '/',
+	    failureRedirect: '/users/login',
+	    failureFlash : true
+	})(req,res,next)
+}
+
+module.exports = {register, login};
