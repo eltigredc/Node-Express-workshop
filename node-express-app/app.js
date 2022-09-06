@@ -4,6 +4,9 @@ const expressEjsLayout = require('express-ejs-layouts')
 const mongoose = require('mongoose');
 const passport = require("passport")
 const session = require("express-session")
+const {ensureAuthenticated} = require('./config/auth')
+const bodyParser = require("body-parser");
+
 
 // VARIABLES
 const app = express();
@@ -21,11 +24,11 @@ app.use(session({
     resave : true,
     saveUninitialized : true
 }));
-
 app.use(passport.initialize());
-
 app.use(passport.session());
 
+
+app.use(bodyParser.urlencoded({ extended:true }))
 
 //DATABASE SETUP
 mongoose.connect('mongodb+srv://snoopDiog:diogodiogodiogo@cluster0.pz7jo9z.mongodb.net/?retryWrites=true&w=majority',{useNewUrlParser: true, useUnifiedTopology : true})
@@ -34,8 +37,10 @@ mongoose.connect('mongodb+srv://snoopDiog:diogodiogodiogo@cluster0.pz7jo9z.mongo
 
 // ROUTES
 app.use('/users',require('./routes/users_router'));
+// app.use('/posts',require('./routes/posts_router'));
 
-app.get('/', (req, res) => {
+
+app.get('/', ensureAuthenticated, (req, res) => {
   res.render('home');
 })
 

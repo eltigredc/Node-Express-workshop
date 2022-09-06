@@ -71,8 +71,7 @@ const register = (req, res) => {
 const login = (req, res, next) => {
 	passport.authenticate('local',{
 	    successRedirect : '/',
-	    failureRedirect: '/users/login',
-	    failureFlash : true
+	    failureRedirect: '/users/login'
 	})(req,res,next)
 }
 

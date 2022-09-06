@@ -2757,7 +2757,7 @@ Nice, we still need to hook it up to a route/path/appartment number. let's open 
 const express = require('express');
 const router = express.Router();
 const register = require('../controllers/users_controller.js').register
-const loogin = require('../controllers/users_controller.js').login
+const login = require('../controllers/users_controller.js').login
 
 router.post('/register',(req,res) => register(req,res))
 router.post('/login',(req,res, next) => login(req,res,next))
@@ -2894,3 +2894,151 @@ and by reloading the page, you can see that you should now have access to the pa
 
 
 ## 16. Authentication : Permissions
+
+Let's talk permissions, what do we mean by that, we just installed a pretty neat authentication system, but for the moment, any user can just change the url manually and access any page he wants.
+
+NO GOOD!
+
+So we need permissions, in this app, permissions are not that hard to set up, there is  only two levels, connected and n ot connected.
+
+If you are connected, you should be able to see all the pages of the app.
+
+If you are not connected, every time you try to access a page you should be redirected to the login page.
+
+We actually already set up that code earlier in our __config/auth.js__ file. so, let's take the building analogy. only if I've been invited inside, or if i have the key Only  then I  can enter the building to go to a specific appartment. It is going to be the same here.
+
+Inside __app.js__ we've defined the home path, path  that should only be accessible to authenticated persons.
+
+To set that up, we'll first add our config file in our dependencies.
+
+```js
+//DEPENDENCIES
+const {ensureAuthenticated} = require('./config/auth')
+```
+
+then, where we actually defined the path, we are going to add our config file as argument. 
+
+```js
+app.get('/', ensureAuthenticated, (req, res) => {
+  res.render('home');
+})
+
+```
+
+If you can't see it, try loading your localhost in incognito mode :)
+
+You can use the same technique everywhere you want to protect a doorbell.
+
+## 17. Posts create a new post
+
+It is now time to tackle our second model and actions on the app. posts. every user can create a post and you can see for  the moment, either: 
+
+1. all the posts of every users on the homepage.
+
+2. just your posts  on the  profile page.
+
+The first step will either way to create a new model in our __models__ folder, the __post.js__ model.
+
+Just as a recap, here is the state of our folder tree for the moment
+
+![image](/images/39.png)
+
+in our post model, we will add like for the user the schema code.
+
+```js
+// DEPENDENCIES
+const mongoose = require('mongoose');
+
+// SCHEMA
+const PostSchema  = new mongoose.Schema({
+  name: String,
+  desc: String,
+  img:
+    {
+        data: Buffer,
+        contentType: String
+    }
+});
+
+// MODEL
+const Post = mongoose.model('Post', PostSchema);
+
+// EXPORT
+module.exports = Post;
+```
+
+Then we will need an actual page for the users to use. so we will create a new folder in our views called __posts__ and inside a new file called __new.ejs__
+
+and code a form page for a new post
+
+<details>
+  <summary>Click me</summary>
+  
+  1. __views/posts/new.ejs__
+  ```html
+  <link rel="stylesheet" href="/static/stylesheets/authentication.css">
+
+<main>
+  <div class="page">
+      <div class="header">
+        <h1 class="logo">New Post</h1>
+      </div>
+      <div class="container">
+        <form action="/posts/new" enctype="multipart/form-data" method="POST">
+          <input 
+          type="name"
+          name="name"
+          placeholder="Enter name"
+          value="<%= typeof name != 'undefined' ? name : '' %>">
+
+          <input 
+          type="desc"
+          name="desc"
+          placeholder="Enter legend"
+          value="<%= typeof desc != 'undefined' ? desc : '' %>">
+
+          <input type="file" name="img" accept="image/*">
+          <button>Create A new post/button>
+        </form>
+        
+        <ul>
+          <li>By signing up, you agree to our</li>
+          <li><a href="">Terms</a></li>
+          <li><a href="">Data Policy</a></li>
+          <li>and</li>
+          <li><a href="">Cookies Policy</a> .</li>
+       </ul>
+      </div>
+  </div>
+  <div class="option">
+     <p>Don't Have an account? <a href="">Sign up</a></p>
+  </div>
+  <div class="otherapps">
+    <p>Get the app.</p>
+    <button type="button"><i class="fab fa-apple"></i> App Store</button>
+    <button type="button"><i class="fab fa-google-play"></i> Google Play</button>
+  </div>
+  <div class="footer">
+    <ul>
+      <li><a href="">ABOUT</a></li>
+      <li><a href="">HELP</a></li>
+      <li><a href="">PRESS</a></li>
+      <li><a href="">API</a></li>
+      <li><a href="">JOBS</a></li>
+      <li><a href="">PRIVACY</a></li>
+      <li><a href="">TEMS</a></li>
+      <li><a href="">LOCATIONS</a></li>
+      <li><a href="">TOP ACCOUNTS</a></li>
+      <li><a href="">HASHTAGS</a></li>
+      <li><a href="">LANGUAGE</a></li>
+    </ul>
+    <p>© 2022 Instagram</p>
+  </div>
+</main>
+
+  ```
+</details>
+
+Nice, now that we have our Model, we have our View,  what are we missing?? A controller!!!!
+
+so we'll create a __controllers/posts_controller.js__ 
