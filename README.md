@@ -1,6 +1,6 @@
-# Node Express introduction 
+# Node Express introduction
 
-## introduction
+## introduction V2
 
 During this workshop we will code together a fully working Node based social media app. Our goal is to create an instagram app clone. The workshop will be split in two parts, a first part where you will follow along as I code and talk in front of you, and a second part, where you will be able to test it by yourself and try to create something. 
 
