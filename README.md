@@ -2935,9 +2935,9 @@ It is now time to tackle our second model and actions on the app. posts. every u
 
 1. all the posts of every users on the homepage.
 
-2. just your posts  on the  profile page.
+2. just your posts on the  profile page.
 
-The first step will either way to create a new model in our __models__ folder, the __post.js__ model.
+The first step will either way be to create a new model in our __models__ folder, the __post.js__ model.
 
 Just as a recap, here is the state of our folder tree for the moment
 
@@ -2953,11 +2953,10 @@ const mongoose = require('mongoose');
 const PostSchema  = new mongoose.Schema({
   name: String,
   desc: String,
-  img:
-    {
-        data: Buffer,
-        contentType: String
-    }
+  img_url: {
+      type  : String,
+      required : true
+  }
 });
 
 // MODEL
@@ -3042,3 +3041,118 @@ and code a form page for a new post
 Nice, now that we have our Model, we have our View,  what are we missing?? A controller!!!!
 
 so we'll create a __controllers/posts_controller.js__ 
+
+and in it we will write the same setup code as we did before for user, just to be sure that everything speaks with each-other correctly.
+
+```js
+// DEPENDENCIES
+const express = require("express");
+const mongoose = require("mongoose");
+const Post = require("../models/post");
+
+const create = (req, res) => {
+    console.log("Im ready to create a new post")
+}
+
+
+module.exports = { create }
+```
+Next, if we have a view, a model and a controller, we only need one thing to link it to our __app.js__ file.
+
+And thats a Router.
+
+So, let's create our __posts_router.js__ and already link it with our controller
+
+```js
+const express = require('express');
+const router = express.Router();
+const create = require('../controllers/posts_controller.js').create
+
+router.get('/new',(req,res)=>{
+    res.render('posts/new');
+})
+
+router.post('/create', (req,res) => create(req,res))
+
+
+module.exports = router;
+```
+
+And to finish, we will have to link our router to our __app.js__ by adding
+
+```js
+app.use('/posts',require('./routes/posts_router'));
+```
+
+to our base routes.
+
+Nice, all our files are setted up. you can test them by simply going to localhost:3000/posts/new, submitting the form and check if you receive a message in your terminal.
+
+If so, let's go to the next step.
+
+In order to continue our app and to allow us to actually upload a picture onto the platform, we will need three new packages, 
+
+1. Cloudinary (npm package to manage Cloudinary inside a node application).
+
+2. Dotenv (to configure and use environment variables).
+
+3. Multer (for file upload).
+
+soooo let's run,
+
+```bash
+npm install dotenv cloudinary multer --save
+```
+
+Nice, one of the packages you just installed is cloudinary. it is a media hosting platform, like Mongodb, it has a pretty generous free-tier usage, so we will use that.
+
+Just know that if you upload more than a certain size of media, they will block your account until you pay
+
+So first step, will be to create an account on [cloudinary](https://cloudinary.com/).
+
+Once that is done, you should be able to access a dashboard like this one :
+
+![image](/images/40.png)
+
+On this dashboard you'll find all the infos needed to create your __.env__ file, if you don't know what is a __.env__ file, it is a file where you can store all your sensible info, file that you should NEVER share with anyone.
+
+create this file and in it write :
+
+```
+CLOUD_NAME = <YOUR - CLOUD - NAME>
+API_KEY = <YOUR - API - KEY>
+API_SECRET = <YOUR - API - SECRET>
+```
+once thats done, go back to our __config__ folder and create inside of it, two new files, __multer.js__ and __cloudinary.js__
+
+Open __cloudinary.js__ and write down the code. 
+
+```js
+const cloudinary = require("cloudinary").v2;
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_KEY,
+  api_secret: process.env.API_SECRET,
+});
+module.exports = cloudinary;
+```
+
+Then you need to set up multer to facilitate file upload. Open __multer.js__ and write code as
+
+```js
+const multer = require("multer");
+const path = require("path");
+// Multer config
+module.exports = multer({
+  storage: multer.diskStorage({}),
+  fileFilter: (req, file, cb) => {
+    let ext = path.extname(file.originalname);
+    if (ext !== ".jpg" && ext !== ".jpeg" && ext !== ".png") {
+      cb(new Error("Unsupported file type!"), false);
+      return;
+    }
+    cb(null, true);
+  },
+});
+```
+

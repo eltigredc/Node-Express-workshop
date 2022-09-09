@@ -5,11 +5,10 @@ const mongoose = require('mongoose');
 const PostSchema  = new mongoose.Schema({
   name: String,
   desc: String,
-  img:
-	{
-	    data: Buffer,
-	    contentType: String
-	}
+  img_url: {
+      type  : String,
+      required : true
+  }
 });
 
 // MODEL

@@ -6,6 +6,7 @@ const passport = require("passport")
 const session = require("express-session")
 const {ensureAuthenticated} = require('./config/auth')
 const bodyParser = require("body-parser");
+require('dotenv').config()
 
 
 // VARIABLES
@@ -26,18 +27,18 @@ app.use(session({
 }));
 app.use(passport.initialize());
 app.use(passport.session());
-
-
 app.use(bodyParser.urlencoded({ extended:true }))
 
+
+
 //DATABASE SETUP
-mongoose.connect('mongodb+srv://snoopDiog:diogodiogodiogo@cluster0.pz7jo9z.mongodb.net/?retryWrites=true&w=majority',{useNewUrlParser: true, useUnifiedTopology : true})
+mongoose.connect('mongodb+srv://diogo:diogodiogodiogo@cluster0.e5efhnb.mongodb.net/?retryWrites=true&w=majority',{useNewUrlParser: true, useUnifiedTopology : true})
 .then(() => console.log('I just connected to your DB, And ready to rumble'))
 .catch((err)=> console.log(err));
 
 // ROUTES
 app.use('/users',require('./routes/users_router'));
-// app.use('/posts',require('./routes/posts_router'));
+app.use('/posts',require('./routes/posts_router'));
 
 
 app.get('/', ensureAuthenticated, (req, res) => {

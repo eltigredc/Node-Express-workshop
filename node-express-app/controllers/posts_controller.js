@@ -1,34 +1,28 @@
 const express = require("express");
-
 const mongoose = require("mongoose");
 const Post = require("../models/post");
-const fs = require("fs");
+const cloudinary = require("../config/cloudinary");
 
-
-
-
-
-const create = (req, res) => {
-	var img = fs.readFileSync(req.file.path);
-	var encode_img = img.toString('base64');
-	var final_img = {
-	    contentType:req.file.mimetype,
-	    image:new Buffer(encode_img,'base64')
-	};
-	console.log(final_img)
-	// Post.create(final_img,function(err,result){
-	//     if(err){
-	//         console.log(err);
-	//     }else{
-	//         console.log(result.img.Buffer);
-	//         console.log("Saved To database");
-	//         res.contentType(final_img.contentType);
-	//         res.send(final_img.image);
-	//     }
-	// })
-
+const create = async (req, res) => {
+	try {
+	    // Upload image to cloudinary
+	    const result = await cloudinary.uploader.upload(req.file.path);
+	    // Create new user
+	    let post = new Post({
+	      name: req.body.name,
+	      desc: req.body.desc,
+	      img_url: result.secure_url,
+	    });
+	    // save post details in mongodb
+	    await post.save();
+	    res.status(200)
+	      .send({
+	        post
+	      });
+	  } catch (err) {
+	    console.log(err);
+	  }
 }
-
 
 
 module.exports = { create }
